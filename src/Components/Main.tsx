@@ -9,6 +9,7 @@ const Main = () => {
     const [files, setFiles] = useState<FileList | null>(null);
     const [isValid, setIsValid] = useState<boolean>(false);
     const [response, setResponse] = useState({});
+    const [stdin, setStdin] = useState("");
 
     /*
     required files state : holds true if file is present, false if not
@@ -112,6 +113,7 @@ const Main = () => {
         const raw = JSON.stringify({
             "language_id": 89,
             "additional_files": encodedZip,
+            "stdin": stdin,
         })
 
         const requestOptions = {
@@ -135,9 +137,9 @@ const Main = () => {
         await fetch("http://localhost:2358/submissions?wait=true", requestOptions)
             .then(response => response.json())
             .then(result => {
-                let res2 = structuredClone(result);
-                res2.status = res2.status.description;
-                setResponse(res2);
+                let transformedResult = structuredClone(result);
+                transformedResult.status = transformedResult.status.description;
+                setResponse(transformedResult);
                 judge0Response.innerHTML = JSON.stringify(result, null, 2);
             })
             .catch(error => {
@@ -148,7 +150,7 @@ const Main = () => {
 
     return (<div className="mx-auto px-20 py-12">
 
-        <h1 className="text-xl font-bold">Judge0 file uploader</h1>
+        <h1 className="text-xl font-bold text-gray-800">Judge0 file uploader</h1>
         <h2 className="text-gray-700">A proof of concept for Arbitre : sending multiple files at once to Judge0 in a base64-encoded zip</h2>
         <h3 className="text-gray-500">Use this to build and try out test suites</h3>
 
@@ -156,13 +158,13 @@ const Main = () => {
 
         <h3 className="text-lg font-semibold mb-2">1. Select files</h3>
 
-        <input type="file" onChange={handleFileChange} multiple />
+        <input type="file" onChange={handleFileChange} multiple className="hover:bg-gray-50 p-1" />
 
         <ul className="mt-2 mb-1 empty:hidden text-sm">
             {requiredFilesState && Object.keys(requiredFilesState).map((file, index) => {
                 return (
                     <li key={index} className="my-3">
-                        <span className={`border shadow-sm rounded-lg px-2 py-1 ${requiredFilesState[file] ? "bg-green-50 border-green-400 text-green-800" : "bg-gray-50 border-gray-300 text-gray-600 border-dashed"}`}>
+                        <span className={`border-2 shadow-sm rounded-lg px-2 py-1 ${requiredFilesState[file] ? "bg-green-50 border-green-300 text-green-800" : "bg-gray-50 border-gray-300 text-gray-600 border-dashed"}`}>
                             {file}
                         </span>
 
@@ -176,7 +178,7 @@ const Main = () => {
                 }
                 return (
                     <li key={index} className="my-3">
-                        <span className="border rounded-lg px-2 py-1 bg-blue-50 border-blue-300 text-blue-800 border-dashed">
+                        <span className="border-2 rounded-lg px-2 py-1 bg-blue-50 border-blue-300 text-blue-800 border-dashed">
                             {file.name}
                         </span>
                     </li>
@@ -188,9 +190,17 @@ const Main = () => {
 
         <h3 className="text-lg font-semibold mt-4">2. Send to Judge0</h3>
 
+        <textarea
+            className="px-2 py-1 font-mono text-sm rounded-lg mt-2 border-2 w-96"
+            placeholder="stdin (optionnal)"
+            value={stdin}
+            onChange={(e: any) => setStdin(e.target.value)}
+        />
+        <br />
+
         <button
             onClick={() => isValid ? generateZipBase64().then(sendToJudge0) : undefined}
-            className={`text-sm text-indigo-600 font-semibold bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-300 rounded-lg px-2 py-1 mt-4 ${isValid ? "" : "cursor-not-allowed opacity-50"}`}
+            className={`text-sm text-indigo-600 font-semibold bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-300 rounded-lg px-2 py-1 mt-2 ${isValid ? "" : "cursor-not-allowed opacity-50"}`}
         >
             Zip and send to Judge0
         </button>
